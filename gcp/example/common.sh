@@ -1,24 +1,25 @@
 #!/bin/bash
 #management_plane-vars
-readonly AUTH_USER=""
-readonly AUTH_PASS=""
-readonly REGION=""
-readonly TENANT=""
-readonly DU_FQDN="" # MANAGEMENT PLANE FQDN
+readonly AUTH_USER="lks@platform9.com"
+readonly AUTH_PASS="TypePassword"
+readonly REGION="lks"
+readonly TENANT="sales-eng"
+readonly DU_FQDN="du-name.platform9.horse"   # MANAGEMENT PLANE FQDN
 
 ##cluster-vars
 readonly CLUSTER_NAME="lks-test"
-readonly CLUSTER_DNS_NAME=""
+readonly CLUSTER_DNS_NAME="lks-test.platform9.horse"
+#CLUSTER_DNS_NAME=""
 readonly NUM_WORKER_NODES=3
 
 #gcp_virtual_machines-vars
-readonly master_machine_type="n1-standard-2"
+readonly master_machine_type="e2-medium"
 readonly worker_machine_type="n1-highmem-2"
 readonly master_network_tags="master"
 readonly image="ubuntu-1804-bionic-v20200923"
 readonly image_project="ubuntu-os-cloud"
 readonly boot_disk_size="40GB"
-readonly external_static_ip=""
+readonly external_static_ip="35.215.126.240"
 readonly network_tier="STANDARD"
 
 ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!no-edits-required-below-this-line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!##
