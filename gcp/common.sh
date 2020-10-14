@@ -12,8 +12,8 @@ readonly CLUSTER_DNS_NAME=""
 readonly NUM_WORKER_NODES=3
 
 #gcp_virtual_machines-vars
-readonly master_machine_type="n2-standard-2"
-readonly worker_machine_type="n2-standard-3"
+readonly master_machine_type="n1-standard-2"
+readonly worker_machine_type="n1-standard-3"
 readonly master_network_tags="master"
 readonly image="ubuntu-1804-bionic-v20200923"
 readonly image_project="ubuntu-os-cloud"
