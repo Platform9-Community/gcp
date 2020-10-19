@@ -41,7 +41,6 @@ function workers() {
 
 }
 
-
 function get_token() {
   BASE_URL="https://$DU_FQDN"
   AUTH_REQUEST_PAYLOAD="{
@@ -59,7 +58,15 @@ function get_token() {
           \"password\":\"$AUTH_PASS\"
           }
         }
-      }
+      },
+     \"scope\":{
+       \"project\":{
+         \"name\":\"${TENANT}\",
+         \"domain\":{
+           \"id\":\"default\"
+           }
+         }
+       }
     }
   }"
     # ===== KEYSTONE API CALLS ====== #
