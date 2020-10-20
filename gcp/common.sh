@@ -264,8 +264,13 @@ function set_default_kubeconfig() {
 		mkdir "${HOME}/.kube"
 		cp -p "${PWD}/kubeconfig" "${HOME}/.kube/config"
 	elif [ -f ${HOME}/.kube/config ]; then
-		cp -pr "${HOME}/.kube/config" "${HOME}/.kube/config-pre"
+		if [ -f ${HOME}/.kube/config-pre ]; then
+			cp -p "${HOME}/.kube/config-pre" "${HOME}/.kube/config-pre-$(date +%F+%T)"
+		fi	
+		cp -p "${HOME}/.kube/config" "${HOME}/.kube/config-pre"
 		cp -p "${PWD}/kubeconfig" "${HOME}/.kube/config"
+	else	# .kube exists without config
+		cp -p "${PWD}/kubeconfig" "${HOME}/.kube/config"		
 	fi
 	export KUBECONFIG="${HOME}/.kube/config"
 	kubectl config rename-context default ${CLUSTER_NAME}
