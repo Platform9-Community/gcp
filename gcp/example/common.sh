@@ -1,4 +1,5 @@
 #!/bin/bash
+# based on sa-internal/release-0.5 branch
 #management_plane-vars
 readonly AUTH_USER="lks@platform9.com"
 readonly AUTH_PASS="TypePassword"

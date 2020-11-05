@@ -1,29 +1,32 @@
 #!/bin/bash
 #management_plane-vars
-readonly AUTH_USER=""
-readonly AUTH_PASS=""
-readonly REGION=""
-readonly TENANT=""
-readonly DU_FQDN="" # MANAGEMENT PLANE FQDN
+readonly AUTH_USER="lks@platform9.com"
+readonly AUTH_PASS="F%r4Et*="
+readonly REGION="pmk45"
+readonly TENANT="lks"
+readonly DU_FQDN="se-surendra-45.platform9.horse"   # MANAGEMENT PLANE FQDN
 
 ##cluster-vars
 readonly CLUSTER_NAME="lks-test"
-readonly CLUSTER_DNS_NAME=""
-readonly NUM_WORKER_NODES=3
+readonly CLUSTER_DNS_NAME="lks-test.platform9.horse"
+#CLUSTER_DNS_NAME=""
+readonly NUM_WORKER_NODES=1
 
 #gcp_virtual_machines-vars
-readonly master_machine_type="n1-standard-2"
-readonly worker_machine_type="n1-highmem-2"
+readonly master_machine_type="e2-medium"
+readonly worker_machine_type="e2-standard-2"
 readonly master_network_tags="master"
 readonly image="ubuntu-1804-bionic-v20201014"
 readonly image_project="ubuntu-os-cloud"
-readonly boot_disk_size="40GB"
-readonly external_static_ip=""
+readonly boot_disk_size="10GB"
+readonly external_static_ip="35.215.126.240"
 readonly network_tier="STANDARD"
 
 ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!no-edits-required-below-this-line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!##
 readonly AUTH_URL="https://${DU_FQDN}"
 readonly master="${CLUSTER_NAME}-mstr"
+readonly kubectl="/tmp/kubectl"
+readonly kustomize="/tmp/kustomize"
 readonly SS=15
 readonly LS=30
 
@@ -39,6 +42,16 @@ function workers() {
 	done
 	echo ${workers[@]}
 
+}
+
+function os_type() {
+	if [[  $(/usr/bin/sw_vers -productName|grep Mac) ]]; then
+		os_type="mac"
+	elif [[ $(/usr/bin/lsb_release -d|grep Ubuntu) ]]; then
+		os_type="ubuntu"
+	else
+		os_type=""
+	fi
 }
 
 function get_token() {
@@ -69,13 +82,13 @@ function get_token() {
        }
     }
   }"
-    # ===== KEYSTONE API CALLS ====== #
+   # ===== KEYSTONE API CALLS ====== #
   KEYSTONE_URL="$BASE_URL/keystone/v3"
 
   X_AUTH_TOKEN=$(curl -si \
     -H "Content-Type: application/json" \
     $KEYSTONE_URL/auth/tokens\?nocatalog \
-    -d "$AUTH_REQUEST_PAYLOAD" | sed -En 's#^x-subject-token:\s(.*)$#\1#pI' | tr -d "\n\r")
+    -d "$AUTH_REQUEST_PAYLOAD" | grep -i ^X-Subject-Token: | cut -f2 -d':' | tr -d '\r' | tr -d ' ')
   
   PROJECT_UUID=$(curl -s \
     -H "Content-Type: application/json" \
@@ -239,22 +252,68 @@ function get_first_kubeconfig() {
     -H "Content-Type: application/json" \
     -H "X-AUTH-TOKEN: $X_AUTH_TOKEN" \
     "$QBERT_URL/$PROJECT_UUID/kubeconfig/$cluster_uuid"
-    sed -i "s/__INSERT_BEARER_TOKEN_HERE__/${X_AUTH_TOKEN}/" "$PWD/kubeconfig"
+    if [[ ${os_type} == "mac" ]]; then
+    	sed -i '' "s/__INSERT_BEARER_TOKEN_HERE__/${X_AUTH_TOKEN}/" "$PWD/kubeconfig"
+    else
+    	sed -i "s/__INSERT_BEARER_TOKEN_HERE__/${X_AUTH_TOKEN}/" "$PWD/kubeconfig"
+    fi
     export KUBECONFIG="${PWD}/kubeconfig"
-    kubectl config get-contexts
-    kubectl get pods -n kube-system
+    ${kubectl} config get-contexts
+    ${kubectl} get pods -n kube-system
 }
 
+function install_kustomize() {
+	${PWD}/install_kustomize.sh 3.8.6
+	mv ${PWD}/kustomize /tmp
+	${kustomize} version
+}
 
-function deploy_gke_csi_driver() {
-	export GOPATH=${HOME}/gcloud-csi
-	mkdir -p ${GOPATH}/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver
-	git clone --single-branch --branch release-0.7 https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver  \
-	${GOPATH}/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver
-	export GCE_PD_SA_DIR=${HOME}
-	${GOPATH}/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/deploy/kubernetes/deploy-driver.sh --skip-sa-check
+function get_kustomize() {
+#	if [[ ${os_type} == "mac" ]]; then
+		if [ ! -f ${kustomize} ]; then
+			install_kustomize
+		elif [[ $(${kustomize} version|awk -F/ '{print $2}'|cut -c -6) != "v3.8.6" ]]; then
+			install_kustomize
+		else
+			echo "Kustomize is already at the required version."
+			${kustomize} version
+		fi
+#   elif [[ ${os_type} == "ubuntu" ]]; then
+#		echo "Skipping kustomize installation on Linux. It will be installed via CSI driver script."
+#	fi
+}
+
+function install_kubectl() {
+	if [[ ${os_type} == "mac" ]]; then
+		curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.17.9/bin/darwin/amd64/kubectl"
+	elif [[ ${os_type} == "ubuntu" ]]; then
+		curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.17.9/bin/linux/amd64/kubectl"
+	fi
+	chmod a+x kubectl
+	mv kubectl /tmp
+}
+
+function lks_kubectl() {
+	if [ -f ${kubectl} ]; then
+		ver=$(${kubectl} version --client|awk -F: '{print $5}'|awk -F, '{print $1}'|head -1)
+		if [[ ${ver} != "\"v1.17.9\"" ]]; then
+			echo $ver
+			rm ${kubectl}
+			echo "Downloading and installing kubectl v1.17.9"
+			install_kubectl
+		fi	
+	else
+		echo "Downloading and installing kubectl v1.17.9"
+		install_kubectl
+	fi	
+}
+
+function deploy_gke_csi_driver_v1.1() {
+	export GOPATH=${PWD}/csi-1.1
+	export GCE_PD_SA_DIR=${HOME} 
+    ${GOPATH}/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/deploy/kubernetes/deploy-driver.sh --skip-sa-check
 	if [ -f ${PWD}/sc.yaml ] ; then
-		kubectl apply -f sc.yaml
+		${kubectl} apply -f sc.yaml
 	fi
 }
 
@@ -273,8 +332,42 @@ function set_default_kubeconfig() {
 		cp -p "${PWD}/kubeconfig" "${HOME}/.kube/config"		
 	fi
 	export KUBECONFIG="${HOME}/.kube/config"
-	kubectl config rename-context default ${CLUSTER_NAME}
-	kubectl config get-contexts
-	kubectl get nodes
-	kubectl get pods,sc -A	
+	${kubectl} config rename-context default ${CLUSTER_NAME}
+	${kubectl} config get-contexts
+	${kubectl} get nodes
+	${kubectl} get pods,sc -A	
+}
+
+function get_kubeconfig() {
+	get_cluster_uuid
+	CL_STATUS=""
+	counter=20
+	# cluster status remains ok.
+	until [[ ${CL_STATUS} = "ok" || ${counter} -eq 0 ]] ; do
+		echo "Counter ${counter}"
+		if [ ${counter} -eq 0 ]; then
+			echo "ERROR downloading the kubeconfig. Cluster API status: ${CL_STATUS}."
+			exit 1
+		fi
+		check_cluster_status
+		if [ "${CL_STATUS}" = "ok" ]; then
+			echo "Cluster API Status: ${CL_STATUS}"
+		fi
+		let counter--
+		sleep ${SS}
+	done
+
+	QBERT_URL="${BASE_URL}/qbert/v3"
+	curl -s -o "kubeconfig"\
+    -H "Content-Type: application/json" \
+    -H "X-AUTH-TOKEN: $X_AUTH_TOKEN" \
+    "$QBERT_URL/$PROJECT_UUID/kubeconfig/$cluster_uuid"
+    if [[ ${os_type} == "mac" ]]; then
+    	sed -i '' "s/__INSERT_BEARER_TOKEN_HERE__/${X_AUTH_TOKEN}/" "$PWD/kubeconfig"
+    else
+    	sed -i "s/__INSERT_BEARER_TOKEN_HERE__/${X_AUTH_TOKEN}/" "$PWD/kubeconfig"
+    fi
+    export KUBECONFIG="${PWD}/kubeconfig"
+    ${kubectl} config get-contexts
+    ${kubectl} get pods -n kube-system
 }

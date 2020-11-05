@@ -1,8 +1,15 @@
+# Tested only on Ubuntu 18.04.
 #!/bin/bash
 exec &> /tmp/logfile
 set -x
 date
-source "${PWD}/common.sh"
+
+if [ -z $1 ] ; then
+	echo "common.sh is missing in argument."
+	exit 1
+else
+	source "${PWD}/$1"
+fi	
 
 grep "Ubuntu" /etc/os-release
 if [ $? -eq 0 ]; then
