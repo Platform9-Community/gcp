@@ -1,15 +1,15 @@
 #!/bin/bash
 # based on sa-internal/release-0.5 branch
 #management_plane-vars
-readonly AUTH_USER="lks@platform9.com"
+readonly AUTH_USER="account@platform9.com"
 readonly AUTH_PASS="TypePassword"
 readonly REGION="lks"
 readonly TENANT="sales-eng"
-readonly DU_FQDN="du-name.platform9.horse"   # MANAGEMENT PLANE FQDN
+readonly DU_FQDN="du-name.platform9.net"   # MANAGEMENT PLANE FQDN
 
 ##cluster-vars
 readonly CLUSTER_NAME="lks-test"
-readonly CLUSTER_DNS_NAME="lks-test.platform9.horse"
+readonly CLUSTER_DNS_NAME="lks-test.account.com"
 #CLUSTER_DNS_NAME=""
 readonly NUM_WORKER_NODES=3
 
