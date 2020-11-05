@@ -1,14 +1,14 @@
 #!/bin/bash
 #management_plane-vars
-readonly AUTH_USER="lks@platform9.com"
-readonly AUTH_PASS="F%r4Et*="
+readonly AUTH_USER="account@platform9.com"
+readonly AUTH_PASS="YOUR-PASSWORD"
 readonly REGION="pmk45"
 readonly TENANT="lks"
-readonly DU_FQDN="se-surendra-45.platform9.horse"   # MANAGEMENT PLANE FQDN
+readonly DU_FQDN="account.platform9.net"   # MANAGEMENT PLANE FQDN
 
 ##cluster-vars
 readonly CLUSTER_NAME="lks-test"
-readonly CLUSTER_DNS_NAME="lks-test.platform9.horse"
+readonly CLUSTER_DNS_NAME="lks-test.your-domain.name"
 #CLUSTER_DNS_NAME=""
 readonly NUM_WORKER_NODES=1
 
