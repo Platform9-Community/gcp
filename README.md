@@ -1,7 +1,11 @@
 # bareos
 Build Single Master and multi worker BareOS cluster in GCP with platform9 APIs
 
-GKE CSI v0.7 for volume provisioning
+Supported OS to run the scripts: 
+1. MacOS 10.x
+2. Ubuntu 18.04 / 16.04
+
+GKE CSI v1.1 for volume provisioning
 
 NodePort Service for exposing the services
 
