@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace:
+  gce-pd-csi-driver
+resources:
+- cluster_setup.yaml
+- controller.yaml
+- csidriver_info.yaml
+- psp.yaml
