@@ -20,6 +20,26 @@ else
   cfile=$1
 fi
 
+
+cat <<EOF > pf9agent.sh
+{
+  #!/bin/bash
+  ${PWD}/agent.sh ${cfile}
+}
+EOF
+
+
+function create_cluster() {
+	#if [ -z ${CLUSTER_DNS_NAME} ]; then
+	#	CLUSTER_DNS_NAME=$(gcloud compute instances describe ${master}|grep natIP|awk '{print $2}')
+	#fi
+	#echo ${CLUSTER_DNS_NAME}
+	cluster_uuid_json=$(curl -s -X POST "${BASE_URL}/qbert/v3/${PROJECT_UUID}/clusters" -H "Content-Type: application/json" \
+	-H "X-Auth-Token:${X_AUTH_TOKEN}" -H  "Cookie: X-Auth-Token=${X_AUTH_TOKEN}" -d "$(cluster_post_json)")
+	export cluster_uuid=$(echo ${cluster_uuid_json} | jq -r .uuid)
+	echo "cluster uuid:" $cluster_uuid
+}
+
 # get the type of OS you are running the script from. Script is tested with MacOS 10.5.4 and Ubuntu 18.04 and 16.04
 os_type
 
@@ -63,29 +83,29 @@ sleep ${LS}
 unset value
 for value in "${workers[@]}"; do
 	echo ${value}
-	gcloud compute scp ${cfile} pf9agent.sh ${value}:/tmp
+	gcloud compute scp ${cfile} agent.sh pf9agent.sh ${value}:/tmp
 	if [ $? -ne 0 ]; then
 		sleep ${LS}
-		gcloud compute scp ${cfile} pf9agent.sh ${value}:/tmp
+		gcloud compute scp ${cfile} agent.sh pf9agent.sh ${value}:/tmp
 	fi
 done
 
 
-gcloud compute scp ${cfile} pf9agent.sh ${master}:/tmp
+gcloud compute scp ${cfile} agent.sh pf9agent.sh ${master}:/tmp
 if [ $? -ne 0 ]; then
 	sleep ${LS}
-	gcloud compute scp ${cfile} pf9agent.sh ${value}:/tmp
+	gcloud compute scp ${cfile} agent.sh pf9agent.sh ${value}:/tmp
 fi	
 
 
-gcloud compute ssh ${master} --command "cd /tmp && ./pf9agent.sh ${cfile}" &
-
+#gcloud compute ssh ${master} --command "cd /tmp && ./pf9agent.sh ${cfile}" &
+gcloud compute ssh ${master} -- 'cd /tmp && ./pf9agent.sh' &
 
 unset value
 for value in "${workers[@]}"; do
 	echo ${value}
-	#gcloud compute ssh ${value} -- 'cd /tmp && ./pf9agent.sh ${cfile}' &
-	gcloud compute ssh ${value} --command "cd /tmp && ./pf9agent.sh ${cfile}" &
+	gcloud compute ssh ${value} -- 'cd /tmp && ./pf9agent.sh' &
+	#gcloud compute ssh ${value} --command "cd /tmp && ./pf9agent.sh ${cfile}" &
 done
 wait
 
