@@ -1,3 +1,2 @@
-  #!/bin/bash
-  ${PWD}/agent.sh
-  
+#!/bin/bash
+${PWD}/agent.sh
