@@ -24,7 +24,7 @@ fi
 cat <<EOF > pf9agent.sh
 {
   #!/bin/bash
-  ${PWD}/agent.sh ${cfile}
+  /tmp/agent.sh ${cfile}
 }
 EOF
 
