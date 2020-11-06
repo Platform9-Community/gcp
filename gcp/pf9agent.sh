@@ -4,12 +4,8 @@ exec &> /tmp/logfile
 set -x
 date
 
-if [ -z $1 ] ; then
-	echo "common.sh is missing in argument."
-	exit 1
-else
-	source "${PWD}/$1"
-fi	
+source "${PWD}/common.sh"
+	
 
 grep "Ubuntu" /etc/os-release
 if [ $? -eq 0 ]; then
