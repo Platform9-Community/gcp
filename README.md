@@ -1,4 +1,4 @@
-# bareos
+# Platform9 on Google Cloud Platform (GCP)
 Build Single Master and multi worker BareOS cluster in GCP with platform9 APIs
 
 Supported OS to run the scripts: 
